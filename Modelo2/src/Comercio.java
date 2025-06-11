@@ -38,4 +38,7 @@ public class Comercio {
         return total;
     }
 
+    public List<Cliente> getClientes() {
+        return clientes;
+    }
 }
