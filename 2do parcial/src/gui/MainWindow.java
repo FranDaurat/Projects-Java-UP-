@@ -5,17 +5,20 @@ import service.HttpExecutor;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.time.LocalDateTime;
+import org.json.JSONObject;
 
 public class MainWindow extends JFrame {
 
     private JComboBox<String> methodBox;
     private JTextField urlField;
-    private JTextArea headersArea;
     private JTextArea bodyArea;
-    private JTextArea responseArea;
+    private JTable headersTable;
+    private JTextArea rawResponseArea;
+    private JTextArea prettyResponseArea;
     private JButton sendButton;
     private JButton guardarFavoritoButton;
     private JButton eliminarFavoritoButton;
@@ -76,23 +79,45 @@ public class MainWindow extends JFrame {
     private JPanel createCenterPanel() {
         JPanel centerPanel = new JPanel(new GridLayout(1, 3, 10, 10));
 
-        headersArea = new JTextArea(10, 30);
-        headersArea.setText("User-Agent: MiniPostman\nAccept: */*");
-        headersArea.setBorder(new TitledBorder("Encabezados"));
+        String[] columnas = {"Clave", "Valor"};
+        Object[][] datosIniciales = {
+                {"User-Agent", "MiniPostman"},
+                {"Accept", "*/*"}
+        };
+        DefaultTableModel model = new DefaultTableModel(datosIniciales, columnas);
+        headersTable = new JTable(model);
+
+        JScrollPane headersScroll = new JScrollPane(headersTable);
+        headersScroll.setBorder(new TitledBorder("Encabezados"));
+
+        JPanel headersPanel = new JPanel(new BorderLayout());
+        headersPanel.add(headersScroll, BorderLayout.CENTER);
+
+        JButton agregarHeaderBtn = new JButton("Agregar Header");
+        agregarHeaderBtn.addActionListener(e -> model.addRow(new Object[]{"", ""}));
+        headersPanel.add(agregarHeaderBtn, BorderLayout.SOUTH);
+
 
         bodyArea = new JTextArea(10, 30);
         bodyArea.setBorder(new TitledBorder("Cuerpo de la Request"));
 
-        responseArea = new JTextArea(20, 50);
-        responseArea.setEditable(false);
-        responseArea.setBorder(new TitledBorder("Respuesta del servidor"));
+        rawResponseArea = new JTextArea();
+        rawResponseArea.setEditable(false);
 
-        centerPanel.add(new JScrollPane(headersArea));
+        prettyResponseArea = new JTextArea();
+        prettyResponseArea.setEditable(false);
+
+        JTabbedPane responseTabs = new JTabbedPane();
+        responseTabs.addTab("Raw", new JScrollPane(rawResponseArea));
+        responseTabs.addTab("Formateada", new JScrollPane(prettyResponseArea));
+
+        centerPanel.add(headersPanel);
         centerPanel.add(new JScrollPane(bodyArea));
-        centerPanel.add(new JScrollPane(responseArea));
+        centerPanel.add(responseTabs);
 
         return centerPanel;
     }
+
 
     private JPanel createBottomPanel() {
         JPanel bottom = new JPanel();
@@ -127,17 +152,42 @@ public class MainWindow extends JFrame {
             Request r = new Request();
             r.setMethod((String) methodBox.getSelectedItem());
             r.setUrl(urlField.getText());
-            r.setHeaders(headersArea.getText());
+            r.setHeaders(obtenerHeadersComoTexto());
             r.setBody(bodyArea.getText());
             r.setTimestamp(LocalDateTime.now());
 
             String res = HttpExecutor.ejecutar(r);
             r.setResponse(res);
-            responseArea.setText(res);
+
+            rawResponseArea.setText(res);
+
+            try {
+                org.json.JSONObject json = new org.json.JSONObject(res);
+                prettyResponseArea.setText(json.toString(4));
+            } catch (Exception ex2) {
+                prettyResponseArea.setText("Respuesta no es JSON válido.");
+            }
+
         } catch (Exception ex) {
-            responseArea.setText("Error: " + ex.getMessage());
+            rawResponseArea.setText("Error: " + ex.getMessage());
+            prettyResponseArea.setText("");
         }
     }
+
+
+    private String obtenerHeadersComoTexto() {
+        StringBuilder sb = new StringBuilder();
+        DefaultTableModel model = (DefaultTableModel) headersTable.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Object key = model.getValueAt(i, 0);
+            Object value = model.getValueAt(i, 1);
+            if (key != null && value != null && !key.toString().isEmpty()) {
+                sb.append(key.toString()).append(": ").append(value.toString()).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
 
     private void cargarFavoritosDesdeDB() {
         try {
@@ -157,11 +207,22 @@ public class MainWindow extends JFrame {
             Request r = favoritos.get(index);
             methodBox.setSelectedItem(r.getMethod());
             urlField.setText(r.getUrl());
-            headersArea.setText(r.getHeaders());
+
+            DefaultTableModel model = (DefaultTableModel) headersTable.getModel();
+            model.setRowCount(0);
+            for (String line : r.getHeaders().split("\n")) {
+                if (line.contains(":")) {
+                    String[] parts = line.split(":", 2);
+                    model.addRow(new Object[]{parts[0].trim(), parts[1].trim()});
+                }
+            }
+
             bodyArea.setText(r.getBody());
-            responseArea.setText("");
+            rawResponseArea.setText("");
+            prettyResponseArea.setText("");
         }
     }
+
 
     private void guardarFavorito(ActionEvent e) {
         String nombre = JOptionPane.showInputDialog(this, "Nombre del favorito:");
@@ -181,7 +242,7 @@ public class MainWindow extends JFrame {
             Request r = new Request();
             r.setMethod((String) methodBox.getSelectedItem());
             r.setUrl(urlField.getText());
-            r.setHeaders(headersArea.getText());
+            r.setHeaders(obtenerHeadersComoTexto());
             r.setBody(bodyArea.getText());
             r.setTimestamp(LocalDateTime.now());
             r.setFavoriteName(nombre);
@@ -225,9 +286,11 @@ public class MainWindow extends JFrame {
 
             methodBox.setSelectedIndex(0);
             urlField.setText("");
-            headersArea.setText("");
             bodyArea.setText("");
-            responseArea.setText("");
+            DefaultTableModel model = (DefaultTableModel) headersTable.getModel();
+            model.setRowCount(0);
+            rawResponseArea.setText("");
+            prettyResponseArea.setText("");
 
             JOptionPane.showMessageDialog(this, "Favorito eliminado correctamente.");
         } catch (Exception ex) {

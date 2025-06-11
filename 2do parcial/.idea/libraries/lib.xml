@@ -2,9 +2,11 @@
   <library name="lib">
     <CLASSES>
       <root url="file://$PROJECT_DIR$/dependencies/lib" />
+      <root url="file://$PROJECT_DIR$/dependencies/lib" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/dependencies/lib" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/dependencies/lib" recursive="false" />
   </library>
 </component>
