@@ -44,12 +44,12 @@ public class MainWindow extends JFrame {
         JPanel topPanel = new JPanel(new BorderLayout(10, 10));
 
         methodBox = new JComboBox<>(new String[]{"GET", "POST", "PUT", "DELETE"});
+
         urlField = new JTextField("https://httpbin.org/get");
 
         JPanel methodPanel = new JPanel();
         methodPanel.add(new JLabel("Método:"));
         methodPanel.add(methodBox);
-
 
         favoritosBox = new JComboBox<>();
         favoritosBox.addItem("Seleccionar favorito...");
@@ -59,17 +59,19 @@ public class MainWindow extends JFrame {
         centerTop.add(urlField, BorderLayout.CENTER);
         centerTop.add(favoritosBox, BorderLayout.SOUTH);
 
+        JLabel userLabel = new JLabel("👤 " + username);
+        userLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        userLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+
+        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        userPanel.add(userLabel);
+
         topPanel.add(methodPanel, BorderLayout.WEST);
         topPanel.add(centerTop, BorderLayout.CENTER);
-
-        JLabel userLabel = new JLabel("👤 " + username);
-        userLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        topPanel.add(userLabel, BorderLayout.EAST);
+        topPanel.add(userPanel, BorderLayout.EAST);
 
         return topPanel;
     }
-
-
 
     private JPanel createCenterPanel() {
         JPanel centerPanel = new JPanel(new GridLayout(1, 3, 10, 10));
