@@ -51,6 +51,8 @@ public class HttpExecutor {
             try (CloseableHttpResponse response = client.execute(request)) {
                 HttpEntity entity = response.getEntity();
                 return entity != null ? EntityUtils.toString(entity) : "[Respuesta vacía]";
+            } catch (Exception e) {
+               return "[Error al ejecutar la solicitud: " + e.getMessage() + "]";
             }
 
         }
