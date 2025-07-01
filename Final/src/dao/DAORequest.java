@@ -122,6 +122,7 @@ public class DAORequest implements IDAORequest {
 
             while (rs.next()) list.add(mapResult(rs));
 
+
         } catch (SQLException e) {
             throw new DAOException("Error al obtener requests: " + e.getMessage());
         }
