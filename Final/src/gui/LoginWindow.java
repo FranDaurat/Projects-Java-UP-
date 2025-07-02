@@ -81,6 +81,11 @@ public class LoginWindow extends JFrame {
         String user = userField.getText();
         String pass = new String(passField.getPassword());
 
+        if (user.isEmpty() || pass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre de usuario y/o la contraseña no pueden estar vacíos");
+            return;
+        }
+
         if (dao.registrar(user, pass)) {
             JOptionPane.showMessageDialog(this, "Registrado correctamente, ahora podés iniciar sesión");
         } else {
