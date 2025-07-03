@@ -13,8 +13,6 @@ public class Request {
     private LocalDateTime timestamp;
     private String favoriteName;
 
-
-
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
 

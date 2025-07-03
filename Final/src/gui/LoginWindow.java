@@ -1,5 +1,6 @@
 package gui;
 
+import dao.DAOException;
 import dao.DAORequest;
 import modelo.Usuario;
 
@@ -62,34 +63,38 @@ public class LoginWindow extends JFrame {
         add(buttonPanel, gbc);
     }
 
+
+
     private void login(ActionEvent e) {
         String user = userField.getText();
         String pass = new String(passField.getPassword());
 
-        Usuario u = dao.login(user, pass);
-        if (u != null) {
-            JOptionPane.showMessageDialog(this, "Bienvenido " + u.getUsername());
-            MainWindow mw = new MainWindow(u.getId(), u.getUsername());
-            mw.setVisible(true);
-            dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos");
+        try {
+            Usuario u = dao.login(user, pass);
+            if (u != null) {
+                JOptionPane.showMessageDialog(this, "Bienvenido " + u.getUsername());
+                MainWindow mw = new MainWindow(u.getId(), u.getUsername());
+                mw.setVisible(true);
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Credenciales incorrectas");
+            }
+        } catch (DAOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al iniciar sesión: " + ex.getMessage());
         }
     }
+
 
     private void registrar(ActionEvent e) {
         String user = userField.getText();
         String pass = new String(passField.getPassword());
 
-        if (user.isEmpty() || pass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El nombre de usuario y/o la contraseña no pueden estar vacíos");
-            return;
-        }
-
-        if (dao.registrar(user, pass)) {
-            JOptionPane.showMessageDialog(this, "Registrado correctamente, ahora podés iniciar sesión");
-        } else {
-            JOptionPane.showMessageDialog(this, "El usuario ya existe");
+        try {
+            if (dao.registrar(user, pass)) {
+                JOptionPane.showMessageDialog(this, "Registrado correctamente, ahora podés iniciar sesión");
+            }
+        } catch (DAOException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }
 }

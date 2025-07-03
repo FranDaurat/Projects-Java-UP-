@@ -175,35 +175,51 @@ public class DAORequest implements IDAORequest {
         }
     }
 
-    public Usuario login(String username, String password) {
+    @Override
+    public Usuario login(String username, String password) throws DAOException {
         String sql = "SELECT * FROM usuario WHERE username=? AND password=?";
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, username);
             ps.setString(2, password);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 Usuario u = new Usuario();
                 u.setId(rs.getInt("id"));
                 u.setUsername(rs.getString("username"));
                 return u;
+            } else {
+                return null;
             }
+
         } catch (SQLException e) {
-            System.err.println("Error en login: " + e.getMessage());
+            throw new DAOException("Error al hacer login", e);
         }
-        return null;
     }
 
-    public boolean registrar(String username, String password) {
+    @Override
+    public boolean registrar(String username, String password) throws DAOException {
+        if (username.isEmpty() || password.isEmpty()) {
+            throw new DAOException("El nombre de usuario o la contraseña están vacíos.");
+        }
+
         String sql = "INSERT INTO usuario (username, password) VALUES (?, ?)";
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, username);
             ps.setString(2, password);
             ps.executeUpdate();
             return true;
+
         } catch (SQLException e) {
-            return false;
+            if (e.getMessage().contains("Unique") || e.getErrorCode() == 23505) {
+                throw new DAOException("El usuario ya existe.");
+            }
+            throw new DAOException("Error al registrar el usuario", e);
         }
     }
+
 }
